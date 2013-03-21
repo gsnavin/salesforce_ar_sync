@@ -63,6 +63,10 @@ module SalesforceArSync
 
         object.salesforce_process_update(attributes) if object && (object.salesforce_updated_at.nil? || (object.salesforce_updated_at && object.salesforce_updated_at < Time.parse(attributes[:SystemModstamp])))
       end
+
+      def async_salesforce_update(attributes={}, priority = 90)
+        delay(:priority => priority, :run_at => 5.seconds.from_now).salesforce_update(attributes)
+      end
     end
 
     # if this instance variable is set to true, the salesforce_sync method will return without attempting
@@ -180,7 +184,7 @@ module SalesforceArSync
     def salesforce_sync
       return if self.salesforce_skip_sync?
       if salesforce_perform_async_call?
-        Delayed::Job.enqueue(SalesforceArSync::SalesforceObjectSync.new(self.class.salesforce_web_class_name, salesforce_id, salesforce_attributes_to_update), :priority => 50)
+        async_salesforce_sync
       else
         if salesforce_object_exists?
           salesforce_update_object(salesforce_attributes_to_update) if salesforce_attributes_to_update.present?
@@ -191,6 +195,10 @@ module SalesforceArSync
     rescue Exception => ex
       self.errors[:base] << ex.message
       return false
+    end
+
+    def async_salesforce_sync
+      Delayed::Job.enqueue(SalesforceArSync::SalesforceObjectSync.new(self.class.salesforce_web_class_name, salesforce_id, salesforce_attributes_to_update), :priority => 50)
     end
     
     def sync_web_id 	

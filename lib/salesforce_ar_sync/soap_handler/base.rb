@@ -13,7 +13,7 @@ module SalesforceArSync
       # queues each individual record from the message for update
       def process_notifications(priority = 90)
         batch_process do |sobject|
-          options[:klass].camelize.constantize.delay(:priority => priority, :run_at => 5.seconds.from_now).salesforce_update(sobject)
+          options[:klass].camelize.constantize.async_salesforce_update(sobject, priority)
         end
       end
 
