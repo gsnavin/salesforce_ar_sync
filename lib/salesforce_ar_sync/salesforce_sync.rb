@@ -54,6 +54,9 @@ module SalesforceArSync
         object = self.find_by_salesforce_id attributes[salesforce_id_attribute_name]
         object ||= self.find_by_id attributes[salesforce_web_id_attribute_name] if salesforce_sync_web_id? && attributes[salesforce_web_id_attribute_name]
         
+        Rails.logger.info '*******************'
+        Rails.logger.info object.to_json
+        Rails.logger.info '*******************'
         if object.nil?
           object = self.new
           salesforce_default_attributes_for_create.merge(:salesforce_id => attributes[salesforce_id_attribute_name]).each_pair do |k, v|
@@ -61,7 +64,15 @@ module SalesforceArSync
           end
         end
 
+        Rails.logger.info '*******************'
+        Rails.logger.info object.to_json
+        Rails.logger.info '*******************'
+
         object.salesforce_process_update(attributes) if object && (object.salesforce_updated_at.nil? || (object.salesforce_updated_at && object.salesforce_updated_at < Time.parse(attributes[:SystemModstamp])))
+
+        Rails.logger.info '*******************'
+        Rails.logger.info object.to_json
+        Rails.logger.info '*******************'
       end
     end
 
